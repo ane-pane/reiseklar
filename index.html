@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="nn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#1a1a15"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Reiseklar"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="icon-192.png"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <title>Reiseklar</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#ddd9cc;font-family:Georgia,serif;-webkit-tap-highlight-color:transparent;}#root{min-height:100vh;}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef} = React;
+
+function useStore(key,init){
+  const [val,setVal]=useState(()=>{try{const s=localStorage.getItem(key);return s?JSON.parse(s):init;}catch{return init;}});
+  const set=v=>{const n=typeof v==="function"?v(val):v;setVal(n);try{localStorage.setItem(key,JSON.stringify(n));}catch{}};
+  return [val,set];
+}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+const SEASONS=["Sommar","Vinter"];
+
+const ICON_DEFS={
+  house:    {label:"Overnatting",render:(a,b)=><svg viewBox="0 0 48 48"><rect x="10" y="12" width="28" height="20" rx="2" fill={a}/><path d="M6 44V32a4 4 0 014-4h28a4 4 0 014 4v12H6z" fill={b}/><path d="M19 32v-4a5 5 0 0110 0v4" fill={b}/><rect x="17" y="17" width="4" height="5" fill="#eef3ea"/><rect x="27" y="17" width="4" height="5" fill="#eef3ea"/></svg>},
+  city:     {label:"By",render:(a,b)=><svg viewBox="0 0 48 48"><rect x="4" y="22" width="10" height="26" rx="1" fill={a}/><rect x="18" y="10" width="12" height="38" rx="1" fill={b}/><rect x="34" y="18" width="10" height="30" rx="1" fill={a}/><rect x="21" y="14" width="3" height="3" fill="#eef3ea"/><rect x="21" y="22" width="3" height="3" fill="#eef3ea"/><rect x="21" y="30" width="3" height="3" fill="#eef3ea"/></svg>},
+  mountain: {label:"Telt",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M2 44L17 12l9 14 7-9 13 27z" fill={a}/><path d="M17 12l-6 9 9 13z" fill={b}/><circle cx="38" cy="9" r="5" fill="#7a6030"/><circle cx="38" cy="9" r="2.5" fill="#eef3ea"/></svg>},
+  backpack: {label:"Ryggsekk",render:(a,b)=><svg viewBox="0 0 48 48"><rect x="14" y="10" width="20" height="32" rx="3" fill={b}/><path d="M20 10V7a4 4 0 018 0v3" fill="none" stroke={a} strokeWidth="2.5"/><rect x="14" y="19" width="20" height="4" fill={a}/><rect x="19" y="27" width="10" height="3" rx="1" fill={a}/><path d="M8 15h6M8 15v14h6" fill="none" stroke={b} strokeWidth="3"/><path d="M40 15h-6M40 15v14h-6" fill="none" stroke={b} strokeWidth="3"/></svg>},
+  car:      {label:"Biltur",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M8 24h32v12H8z" fill={b}/><path d="M12 24l3-10h18l3 10" fill={a}/><rect x="6" y="33" width="36" height="3" rx="1" fill={b}/><circle cx="14" cy="38" r="5" fill="#1a1a15"/><circle cx="34" cy="38" r="5" fill="#1a1a15"/><circle cx="14" cy="38" r="2" fill="#8c8c7e"/><circle cx="34" cy="38" r="2" fill="#8c8c7e"/><rect x="20" y="26" width="8" height="6" fill="#eef3ea"/></svg>},
+  ski:      {label:"Skitur",render:(a,b)=><svg viewBox="0 0 48 48"><circle cx="28" cy="10" r="5" fill={a}/><path d="M28 15l-4 10-12 8" fill="none" stroke={b} strokeWidth="3" strokeLinecap="round"/><path d="M6 38l36 4" stroke={b} strokeWidth="3" strokeLinecap="round"/><path d="M6 38l-2 4" stroke={b} strokeWidth="2.5" strokeLinecap="round"/><path d="M42 42l-2 4" stroke={b} strokeWidth="2.5" strokeLinecap="round"/><path d="M16 27l8-4 6 6" fill="none" stroke={a} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>},
+  sun:      {label:"Strand/Sol",render:(a,b)=><svg viewBox="0 0 48 48"><circle cx="24" cy="20" r="8" fill="#d4952a"/><path d="M24 6v4M24 30v4M10 20H6M42 20h-4M14 10l3 3M34 10l-3 3M14 30l3-3M34 30l-3-3" stroke="#d4952a" strokeWidth="2.5" strokeLinecap="round"/><path d="M8 38c4-6 8-8 16-8s12 2 16 8" fill={a}/><path d="M4 42h40" stroke={b} strokeWidth="2.5" strokeLinecap="round"/></svg>},
+  train:    {label:"Tog",render:(a,b)=><svg viewBox="0 0 48 48"><rect x="10" y="8" width="28" height="28" rx="4" fill={b}/><rect x="14" y="12" width="9" height="8" rx="1" fill="#eef3ea"/><rect x="25" y="12" width="9" height="8" rx="1" fill="#eef3ea"/><rect x="10" y="28" width="28" height="4" fill={a}/><circle cx="16" cy="40" r="5" fill={b}/><circle cx="32" cy="40" r="5" fill={b}/><circle cx="16" cy="40" r="2" fill={a}/><circle cx="32" cy="40" r="2" fill={a}/></svg>},
+  plane:    {label:"Fly",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M24 6c-2 0-3 1-3 3v16L8 32v4l13-3v7l-4 3v3l7-2 7 2v-3l-4-3v-7l13 3v-4L27 25V9c0-2-1-3-3-3z" fill={b}/><path d="M8 36l13-3M40 36L27 33" stroke={a} strokeWidth="1.5"/></svg>},
+  tent:     {label:"Camping",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M24 6L4 40h40L24 6z" fill={a}/><path d="M24 6L14 40h20L24 6z" fill={b}/><path d="M19 40v-8a5 5 0 0110 0v8" fill={a}/><line x1="2" y1="40" x2="46" y2="40" stroke={b} strokeWidth="2.5" strokeLinecap="round"/></svg>},
+  boat:     {label:"Båt/Ferje",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M24 8v22" stroke={b} strokeWidth="2.5" strokeLinecap="round"/><path d="M24 8l14 12H24z" fill={a}/><path d="M8 30h32l-4 8H12z" fill={b}/><path d="M4 42c4-2 8-2 12 0s8 2 12 0 8-2 12 0" fill="none" stroke={a} strokeWidth="2.5" strokeLinecap="round"/></svg>},
+  bike:     {label:"Sykkeltur",render:(a,b)=><svg viewBox="0 0 48 48"><circle cx="12" cy="34" r="8" fill="none" stroke={b} strokeWidth="3"/><circle cx="36" cy="34" r="8" fill="none" stroke={b} strokeWidth="3"/><path d="M20 14h8l4 12H16l4-8" fill={a}/><path d="M16 26l-4 8M28 26l8 8M24 14v-6" stroke={b} strokeWidth="2.5" strokeLinecap="round"/><circle cx="24" cy="8" r="3" fill={a}/></svg>},
+};
+const ICON_KEYS=Object.keys(ICON_DEFS);
+const DT_A="#c8d8bc",DT_B="#3d5c30";
+
+function TripIcon({iconKey,size=44,a=DT_A,b=DT_B}){
+  const def=ICON_DEFS[iconKey]||ICON_DEFS.house;
+  return <div style={{width:size,height:size,flexShrink:0}}>{def.render(a,b)}</div>;
+}
+function ProfileIcon(){
+  return <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8c8c7e" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>;
+}
+
+const DEFAULT_TRIP_TYPES=[
+  {id:"overnight",name:"Overnatting",icon:"house"},
+  {id:"city",name:"By",icon:"city"},
+  {id:"tenting",name:"Telttur",icon:"mountain"},
+  {id:"backpack",name:"Ryggsekktur",icon:"backpack"},
+  {id:"roadtrip",name:"Biltur",icon:"car"},
+];
+
+function buildCats(tripTypeId,season,days){
+  const w=season==="Vinter",hike=tripTypeId==="tenting",bp=tripTypeId==="backpack";
+  const city=tripTypeId==="city",road=tripTypeId==="roadtrip",overnight=tripTypeId==="overnight";
+  const noTent=!hike;
+  const I=t=>({id:uid(),text:t,checked:false});
+  return [
+    {id:"clothes",label:"Kle",items:[
+      I(w?"Ull-undertrøye":"T-skjorter / skjorter"),
+      I(w?"Ullstilongs":"Lette bukser / shorts"),
+      I(w?"Varmt mellomlag":"Lett jakke eller hettejakke"),
+      I(w?"Vinterkåpe":"Regnjakke"),
+      I(`Truser (${days+1} stk)`),
+      I(`Sokkar (${days+1} par)`),
+      I("Pysj e.l."),
+      ...(noTent?[I("Tur/treningstøy"),I("Treningsbh")]:[]),
+      ...(city?[I("Finare antrekk til middag/kveld")]:[]),
+      ...(hike||bp?[I("Turbukser"),I("Tursko / fjelløvlar")]:[]),
+      ...(w&&(hike||bp)?[I("Dunjakke"),I("Varm lue"),I("Hanskar"),I("Halsrøyr")]:[]),
+    ]},
+    {id:"toiletries",label:"Toalettsaker",items:[
+      I("Tannbørste + tannkrem"),I("Deodorant"),I("Sjampo"),I("Briller"),
+      I("Linsevæske"),I("Linseetui"),
+      ...(w?[]:[I("Solkrem")]),
+      ...(hike||bp?[I("Gnagsårplaster"),I("Enkelt førstehjelpsett"),I("Myggmiddel")]:[]),
+    ]},
+    {id:"gear",label:"Utstyr",items:[
+      ...(hike?[I("Telt"),I("Sovepose"),I("Liggeunderlag"),I("Turgåstavar"),I("Hovudlykt + reserve-batteri"),I("Kart & kompass"),I("Vassreinsing / filter"),I("Primus + gass")]:[]),
+      ...(bp?[I("Ryggsekk (hovud)"),I("Soveliner"),I("Reisehåndkle"),I("Hengelås (til låsbare skap)"),I("Hovudlykt"),I("Liten dagssekk")]:[]),
+      ...(city?[I("Dagssekk / lita veske"),I("Komfortable spasersko"),I("Kompakt paraply")]:[]),
+      ...(road?[I("Vegkart / frakopla GPS"),I("Pledd til bilen"),I("Nødutstyr til bil")]:[]),
+      ...(overnight?[I("Overnatningsveske")]:[]),
+    ]},
+    {id:"electronics",label:"Elektronikk",items:[
+      I("Mobil + ladar"),I("Powerbank"),
+      ...(!overnight?[I("Reiseadapter (om nødvendig)")]:[]),
+      ...(road?[I("Billader")]:[]),
+      ...(hike||bp?[I("Kart lasta ned utan nett")]:[]),
+      I("Pulsklokke + ladar"),I("Pulsbelte"),
+      ...(noTent?[I("Earbuds"),I("Laptop + ladar")]:[]),
+    ]},
+    {id:"food",label:"Mat",items:[
+      I("Vassflaske"),
+      I("Ta med (kjølevarer):"),
+      I("Ta med (tørrvarer):"),
+      I("Handle:"),
+      I("Avklar restaurant:"),
+    ]},
+    {id:"hygge",label:"Hygge",items:[
+      I("Bok eller kindle"),
+      ...(road?[I("Spelelister / podkastar lasta ned")]:[]),
+    ]},
+    {id:"peace",label:"Ro i sjela",items:[
+      I("ID / pass"),
+      I("Billettar tilgjengelege på mobil"),
+      I("Betalingskort"),
+      I("Mobil fulladd"),
+      I("Kattepass ordna"),
+      I("Nokon heime kjenner planen min"),
+    ]},
+  ];
+}
+
+const DEF_PROFILE={meds:[],supplements:[]};
+function dragReorder(items,from,to){const n=[...items];const[m]=n.splice(from,1);n.splice(to,0,m);return n;}
+function calcProgress(trip){
+  const cats=trip.categories||[];
+  const total=cats.reduce((a,c)=>a+c.items.length,0);
+  const done=cats.reduce((a,c)=>a+c.items.filter(i=>i.checked).length,0);
+  return {overall:total>0?Math.round(done/total*100):0,done,total};
+}
+
+// ── PROFIL MODAL ──────────────────────────────────────────────────────────────
+function ProfileModal({profile,setProfile,onClose}){
+  const addMed=()=>setProfile(p=>({...p,meds:[...p.meds,{id:uid(),name:"",perDay:1,unit:"tablettar",buffer:1}]}));
+  const updMed=(id,f,v)=>setProfile(p=>({...p,meds:p.meds.map(m=>m.id===id?{...m,[f]:v}:m)}));
+  const delMed=id=>setProfile(p=>({...p,meds:p.meds.filter(m=>m.id!==id)}));
+  const addSup=()=>setProfile(p=>({...p,supplements:[...p.supplements,{id:uid(),name:"",perDay:1,unit:"kapslar"}]}));
+  const updSup=(id,f,v)=>setProfile(p=>({...p,supplements:p.supplements.map(s=>s.id===id?{...s,[f]:v}:s)}));
+  const delSup=id=>setProfile(p=>({...p,supplements:p.supplements.filter(s=>s.id!==id)}));
+  return(
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-head">
+          <span className="modal-title">Helse</span>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          <p className="vintro">Set ein gong — vert brukt på alle turar automatisk.</p>
+          <div className="fg"><div className="gl">Reseptmedisinar</div>
+            {profile.meds.map(m=>(
+              <div key={m.id} className="hb">
+                <input className="fi" placeholder="Namn på medisin" value={m.name} onChange={e=>updMed(m.id,"name",e.target.value)}/>
+                <div className="ifs">
+                  <span className="fl">Per dag</span>
+                  <input className="fi num" type="number" min="0.5" step="0.5" value={m.perDay} onChange={e=>updMed(m.id,"perDay",parseFloat(e.target.value)||1)}/>
+                  <span className="fl">Eining</span>
+                  <input className="fi sh" placeholder="tablettar" value={m.unit} onChange={e=>updMed(m.id,"unit",e.target.value)}/>
+                  <span className="fl">Buffer</span>
+                  <input className="fi num" type="number" min="0" value={m.buffer} onChange={e=>updMed(m.id,"buffer",parseInt(e.target.value)||0)}/>
+                  <button className="tb danger" onClick={()=>delMed(m.id)}>Fjern</button>
+                </div>
+              </div>
+            ))}
+            <button className="db" onClick={addMed}>+ Legg til medisin</button>
+          </div>
+          <div className="fg"><div className="gl">Kosttilskot</div>
+            {profile.supplements.map(s=>(
+              <div key={s.id} className="hb">
+                <input className="fi" placeholder="Namn på tilskot" value={s.name} onChange={e=>updSup(s.id,"name",e.target.value)}/>
+                <div className="ifs">
+                  <span className="fl">Per dag</span>
+                  <input className="fi num" type="number" min="1" value={s.perDay} onChange={e=>updSup(s.id,"perDay",parseInt(e.target.value)||1)}/>
+                  <span className="fl">Eining</span>
+                  <input className="fi sh" placeholder="kapslar" value={s.unit} onChange={e=>updSup(s.id,"unit",e.target.value)}/>
+                  <button className="tb danger" onClick={()=>delSup(s.id)}>Fjern</button>
+                </div>
+              </div>
+            ))}
+            <button className="db" onClick={addSup}>+ Legg til kosttilskot</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── NY TUR FORM ───────────────────────────────────────────────────────────────
+function NewTripForm({tripTypes,setTripTypes,templates,profile,onSave,onCancel}){
+  const [name,setName]=useState("");
+  const [ttId,setTtId]=useState(tripTypes[0]?.id||"");
+  const [sea,setSea]=useState(SEASONS[0]);
+  const [days,setDays]=useState(3);
+  const [addingType,setAddingType]=useState(false);
+  const [newTypeName,setNewTypeName]=useState("");
+  const [newTypeIcon,setNewTypeIcon]=useState(ICON_KEYS[0]);
+  const [newTypeClone,setNewTypeClone]=useState(tripTypes[0]?.id||"");
+  const [editingTypeId,setEditingTypeId]=useState(null);
+  const [editTypeName,setEditTypeName]=useState("");
+  const selTt=tripTypes.find(t=>t.id===ttId)||tripTypes[0];
+
+  const addType=()=>{
+    if(!newTypeName.trim())return;
+    const newId=uid();
+    setTripTypes(p=>[...p,{id:newId,name:newTypeName.trim(),icon:newTypeIcon,cloneFrom:newTypeClone}]);
+    setTtId(newId);setNewTypeName("");setAddingType(false);
+  };
+  const saveTypeEdit=id=>{setTripTypes(p=>p.map(t=>t.id===id?{...t,name:editTypeName.trim()||t.name}:t));setEditingTypeId(null);};
+
+  const save=()=>{
+    if(!name.trim())return;
+    const d=parseInt(days)||1;
+    const tt=tripTypes.find(t=>t.id===ttId)||tripTypes[0];
+    const key=`${ttId}__${sea}`;
+    let cats;
+    if(templates[key])cats=templates[key].map(c=>({...c,items:c.items.map(i=>({...i,id:uid(),checked:false}))}));
+    else if(tt.cloneFrom){const sk=`${tt.cloneFrom}__${sea}`;cats=templates[sk]?templates[sk].map(c=>({...c,items:c.items.map(i=>({...i,id:uid(),checked:false}))})):buildCats(tt.cloneFrom,sea,d);}
+    else cats=buildCats(ttId,sea,d);
+    const wh=cats.map(c=>{
+      if(c.id!=="toiletries")return c;
+      return{...c,items:[...c.items,
+        ...profile.meds.filter(m=>m.name).map(m=>({id:uid(),checked:false,text:`${m.name}: ${Math.ceil(m.perDay*d)+(m.buffer||0)} ${m.unit}`})),
+        ...profile.supplements.filter(s=>s.name).map(s=>({id:uid(),checked:false,text:`${s.name}: ${Math.ceil(s.perDay*d)} ${s.unit}`})),
+      ]};
+    });
+    onSave({id:uid(),name:name.trim(),tripTypeId:ttId,season:sea,days:d,categories:wh});
+  };
+
+  return(
+    <div className="ntf">
+      <div className="gl" style={{marginBottom:12}}>Ny tur</div>
+      <input className="fi" placeholder="Turnamn (t.d. Bergen-helg)" value={name} onChange={e=>setName(e.target.value)} autoFocus/>
+      <div className="gl" style={{marginTop:4}}>Turtype</div>
+      <div className="og">
+        {tripTypes.map(t=>(
+          <div key={t.id}>
+            {editingTypeId===t.id
+              ?<input className="fi ob-edit" value={editTypeName} onChange={e=>setEditTypeName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveTypeEdit(t.id);if(e.key==="Escape")setEditingTypeId(null);}} onBlur={()=>saveTypeEdit(t.id)} autoFocus/>
+              :<button className={`ob ${ttId===t.id?"on":""}`} onClick={()=>setTtId(t.id)} onDoubleClick={()=>{setEditingTypeId(t.id);setEditTypeName(t.name);}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
+                  <TripIcon iconKey={t.icon} size={24} a={ttId===t.id?"#eef3ea":DT_A} b={ttId===t.id?"#eef3ea":DT_B}/>
+                </div>
+                {t.name}
+              </button>
+            }
+          </div>
+        ))}
+        {!addingType&&(
+          <button className="ob ob-add" onClick={()=>setAddingType(true)}>
+            <div style={{fontSize:24,lineHeight:1,color:"#8c8c7e",marginBottom:2}}>+</div>
+            <span>Ny type</span>
+          </button>
+        )}
+      </div>
+      {addingType&&(
+        <div className="add-type-box">
+          <input className="fi" placeholder="Namn på turtype" value={newTypeName} onChange={e=>setNewTypeName(e.target.value)} autoFocus/>
+          <div className="gl" style={{marginTop:10,marginBottom:6}}>Vel ikon</div>
+          <div className="icon-picker">
+            {ICON_KEYS.map(k=>(
+              <button key={k} className={`ip-btn ${newTypeIcon===k?"on":""}`} onClick={()=>setNewTypeIcon(k)}>
+                <TripIcon iconKey={k} size={26}/>
+              </button>
+            ))}
+          </div>
+          <div className="gl" style={{marginTop:10,marginBottom:6}}>Klon liste frå</div>
+          <select className="fi" value={newTypeClone} onChange={e=>setNewTypeClone(e.target.value)}>
+            {tripTypes.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          <div className="fbs" style={{marginTop:10}}>
+            <button className="pb sm" onClick={addType}>Legg til</button>
+            <button className="gb" onClick={()=>setAddingType(false)}>Avbryt</button>
+          </div>
+        </div>
+      )}
+      <div className="og two" style={{marginTop:4}}>
+        {SEASONS.map(s=><button key={s} className={`ob ${sea===s?"on":""}`} onClick={()=>setSea(s)}>{s}</button>)}
+      </div>
+      <div className="ifs"><span className="fl">Dagar vekke</span><input className="fi num" type="number" min="1" value={days} onChange={e=>setDays(e.target.value)}/></div>
+      {templates[`${ttId}__${sea}`]&&<div className="tn">Brukar lagra mal for {selTt?.name} / {sea}</div>}
+      <div className="fbs"><button className="pb" onClick={save}>Opprett tur</button><button className="gb" onClick={onCancel}>Avbryt</button></div>
+      <p className="vintro" style={{marginBottom:0}}>Dobbeltklikk på ein turtype for å endre namnet.</p>
+    </div>
+  );
+}
+
+// ── TURDETALJ ─────────────────────────────────────────────────────────────────
+function TripDetail({trip,setTrips,profile,tripTypes,templates,setTemplates,onBack}){
+  const [open,setOpen]=useState(()=>{const o={};(trip.categories||[]).forEach(c=>{o[c.id]=true;});return o;});
+  const [newItems,setNewItems]=useState({});
+  const [editing,setEditing]=useState(null);
+  const [editTxt,setEditTxt]=useState("");
+  const [askSave,setAskSave]=useState(false);
+  const dragRef=useRef({});
+  const touchRef=useRef({});
+  const catListRef=useRef();
+
+  const upd=fn=>setTrips(p=>p.map(t=>t.id===trip.id?fn(t):t));
+  const toggleCat=cid=>{const cat=(trip.categories||[]).find(c=>c.id===cid);if(!cat)return;const all=cat.items.every(i=>i.checked);upd(t=>({...t,categories:t.categories.map(c=>c.id!==cid?c:{...c,items:c.items.map(i=>({...i,checked:!all}))})}));};
+  const toggleItem=(cid,iid)=>upd(t=>({...t,categories:t.categories.map(c=>c.id!==cid?c:{...c,items:c.items.map(i=>i.id===iid?{...i,checked:!i.checked}:i)})}));
+  const delItem=(cid,iid)=>upd(t=>({...t,categories:t.categories.map(c=>c.id!==cid?c:{...c,items:c.items.filter(i=>i.id!==iid)})}));
+  const addItem=cid=>{const t=(newItems[cid]||"").trim();if(!t)return;upd(tr=>({...tr,categories:tr.categories.map(c=>c.id!==cid?c:{...c,items:[...c.items,{id:uid(),text:t,checked:false}]})}));setNewItems(p=>({...p,[cid]:""}));};
+  const saveEdit=()=>{if(!editing||!editTxt.trim())return;upd(t=>({...t,categories:t.categories.map(c=>c.id!==editing.cid?c:{...c,items:c.items.map(i=>i.id!==editing.iid?i:{...i,text:editTxt.trim()})})}));setEditing(null);setEditTxt("");};
+
+  // Mouse drag for categories
+  const catMouseDrag=(ci)=>({
+    draggable:true,
+    onDragStart:e=>{dragRef.current={type:"cat",from:ci};e.dataTransfer.effectAllowed="move";},
+    onDragEnter:()=>{if(dragRef.current.type==="cat")dragRef.current.to=ci;},
+    onDragOver:e=>e.preventDefault(),
+    onDragEnd:()=>{const s=dragRef.current;if(s.type==="cat"&&s.from!==s.to&&s.to!==undefined)upd(t=>({...t,categories:dragReorder(t.categories,s.from,s.to)}));dragRef.current={};}
+  });
+
+  // Mouse drag for items
+  const itemMouseDrag=(cid,ii)=>({
+    draggable:true,
+    onDragStart:e=>{dragRef.current={type:"item",cid,from:ii};e.dataTransfer.effectAllowed="move";},
+    onDragEnter:()=>{if(dragRef.current.type==="item"&&dragRef.current.cid===cid)dragRef.current.to=ii;},
+    onDragOver:e=>e.preventDefault(),
+    onDragEnd:()=>{const s=dragRef.current;if(s.type==="item"&&s.cid===cid&&s.from!==s.to&&s.to!==undefined)upd(t=>({...t,categories:t.categories.map(c=>c.id!==cid?c:{...c,items:dragReorder(c.items,s.from,s.to)})}));dragRef.current={};}
+  });
+
+  // Touch drag for categories
+  const catTouchStart=(e,ci)=>{
+    const el=e.currentTarget.closest(".cb2");
+    const r=el.getBoundingClientRect(),t=e.touches[0];
+    const clone=el.cloneNode(true);
+    clone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;opacity:0.85;pointer-events:none;z-index:9999;background:#edeada;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.2);`;
+    document.body.appendChild(clone);
+    el.style.opacity="0.25";
+    touchRef.current={type:"cat",from:ci,to:ci,clone,el,offsetY:t.clientY-r.top,listEl:catListRef.current};
+  };
+  const catTouchMove=(e)=>{
+    const s=touchRef.current;if(!s.clone||s.type!=="cat")return;
+    e.preventDefault();
+    const t=e.touches[0];
+    s.clone.style.top=(t.clientY-s.offsetY)+"px";
+    const items=s.listEl?.querySelectorAll(".cb2");
+    if(!items)return;
+    items.forEach((el,idx)=>{const r=el.getBoundingClientRect();if(t.clientY>r.top+10&&t.clientY<r.bottom-10)s.to=idx;});
+  };
+  const catTouchEnd=()=>{
+    const s=touchRef.current;
+    if(s.clone){s.clone.remove();}
+    if(s.el)s.el.style.opacity="";
+    if(s.type==="cat"&&s.from!==s.to)upd(t=>({...t,categories:dragReorder(t.categories,s.from,s.to)}));
+    touchRef.current={};
+  };
+
+  // Touch drag for items
+  const itemTouchStart=(e,cid,ii,listEl)=>{
+    const el=e.currentTarget.closest(".row");
+    const r=el.getBoundingClientRect(),t=e.touches[0];
+    const clone=el.cloneNode(true);
+    clone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;opacity:0.85;pointer-events:none;z-index:9999;background:#edeada;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.2);`;
+    document.body.appendChild(clone);
+    el.style.opacity="0.25";
+    touchRef.current={type:"item",cid,from:ii,to:ii,clone,el,offsetY:t.clientY-r.top,listEl};
+  };
+  const itemTouchMove=(e)=>{
+    const s=touchRef.current;if(!s.clone||s.type!=="item")return;
+    e.preventDefault();
+    const t=e.touches[0];
+    s.clone.style.top=(t.clientY-s.offsetY)+"px";
+    const items=s.listEl?.querySelectorAll(".row");
+    if(!items)return;
+    items.forEach((el,idx)=>{const r=el.getBoundingClientRect();if(t.clientY>r.top+6&&t.clientY<r.bottom-6)s.to=idx;});
+  };
+  const itemTouchEnd=()=>{
+    const s=touchRef.current;
+    if(s.clone)s.clone.remove();
+    if(s.el)s.el.style.opacity="";
+    if(s.type==="item"&&s.from!==s.to)upd(t=>({...t,categories:t.categories.map(c=>c.id!==s.cid?c:{...c,items:dragReorder(c.items,s.from,s.to)})}));
+    touchRef.current={};
+  };
+
+  const prog=calcProgress(trip);
+  const tt=tripTypes.find(t=>t.id===trip.tripTypeId)||{icon:"house",name:""};
+
+  const saveTemplate=()=>{
+    setTemplates(p=>({...p,[`${trip.tripTypeId}__${trip.season}`]:trip.categories.map(c=>({...c,items:c.items.map(i=>({...i,checked:false}))}))}));
+    setAskSave(false);onBack();
+  };
+
+  return(
+    <div className="dw">
+      <button className="bl" onClick={()=>prog.done>0?setAskSave(true):onBack()}>&larr; Alle turar</button>
+      {askSave&&(
+        <div className="sb">Lagre endringar i «{tt.name} / {trip.season}»-malen til neste gong?
+          <div className="sbb"><button className="pb sm" onClick={saveTemplate}>Lagre mal</button><button className="tb" onClick={()=>{setAskSave(false);onBack();}}>Hopp over</button></div>
+        </div>
+      )}
+      <div className="dh">
+        <div className="dhl">
+          <div className="dt">{trip.name}</div>
+          <div className="dm">{trip.days} {trip.days===1?"dag":"dagar"} vekke &middot; {tt.name} &middot; {trip.season}</div>
+          <div className="dpw"><div className="dpt"><div className="dpf" style={{width:prog.overall+"%"}}/></div><span className="dpl">{prog.overall}%</span></div>
+          <div className="prog-sub">{prog.done} av {prog.total} pakka</div>
+        </div>
+        <TripIcon iconKey={tt.icon} size={52}/>
+      </div>
+
+      <div className="pb2" ref={catListRef}>
+        {(trip.categories||[]).map((cat,ci)=>{
+          const isOpen=open[cat.id];
+          const cd=cat.items.filter(i=>i.checked).length;
+          const allDone=cat.items.length>0&&cd===cat.items.length;
+          const md=catMouseDrag(ci);
+          const itemListRef={current:null};
+
+          return(
+            <div key={cat.id} className={`cb2 ${allDone?"complete":""}`}
+              {...md}
+              onTouchStart={e=>catTouchStart(e,ci)}
+              onTouchMove={catTouchMove}
+              onTouchEnd={catTouchEnd}
+            >
+              <div className="ch">
+                <span className="dh2">⠿</span>
+                <button className={`cat-ck ${allDone?"on":cd>0?"partial":""}`} onClick={e=>{e.stopPropagation();toggleCat(cat.id);}}>
+                  {allDone?"✓":cd>0?"–":""}
+                </button>
+                <button className="ch-btn" onClick={()=>setOpen(p=>({...p,[cat.id]:!p[cat.id]}))}>
+                  <span className="cl">{cat.label}</span>
+                  {allDone?<span className="cdb">ferdig</span>:<span className="cc">{cd}/{cat.items.length}</span>}
+                  <span className="cv">{isOpen?"−":"+"}</span>
+                </button>
+              </div>
+              {isOpen&&(
+                <div className="cbdy" ref={r=>itemListRef.current=r}>
+                  {cat.items.map((item,ii)=>{
+                    const isEd=editing&&editing.cid===cat.id&&editing.iid===item.id;
+                    const imd=itemMouseDrag(cat.id,ii);
+                    return(
+                      <div key={item.id} className={`row ${item.checked?"done":""}`}
+                        {...imd}
+                        onTouchStart={e=>itemTouchStart(e,cat.id,ii,itemListRef.current)}
+                        onTouchMove={itemTouchMove}
+                        onTouchEnd={itemTouchEnd}
+                      >
+                        <span className="dhs">⠿</span>
+                        <button className={`ck ${item.checked?"on":""}`} onClick={()=>toggleItem(cat.id,item.id)}>{item.checked?"✓":""}</button>
+                        {isEd
+                          ?<input className="fi ie" value={editTxt} onChange={e=>setEditTxt(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(null);}} onBlur={saveEdit} autoFocus/>
+                          :<span className="ct" onDoubleClick={()=>{setEditing({cid:cat.id,iid:item.id});setEditTxt(item.text);}}>{item.text}</span>
+                        }
+                        <button className="xb" onClick={()=>delItem(cat.id,item.id)}>×</button>
+                      </div>
+                    );
+                  })}
+                  <div className="ai">
+                    <input className="fi" placeholder="Legg til element…" value={newItems[cat.id]||""} onChange={e=>setNewItems(p=>({...p,[cat.id]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addItem(cat.id)}/>
+                    <button className="smb" onClick={()=>addItem(cat.id)}>Legg til</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="df">Klar. God tur.</div>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App(){
+  const [trips,setTrips]=useStore("rk2_trips",[]);
+  const [profile,setProfile]=useStore("rk2_profile",DEF_PROFILE);
+  const [templates,setTemplates]=useStore("rk2_templates",{});
+  const [tripTypes,setTripTypes]=useStore("rk2_types",DEFAULT_TRIP_TYPES);
+  const [activeId,setActiveId]=useState(null);
+  const [adding,setAdding]=useState(false);
+  const [showProfile,setShowProfile]=useState(false);
+
+  const trip=trips.find(t=>t.id===activeId);
+  const save=t=>{setTrips(p=>[...p,t]);setActiveId(t.id);setAdding(false);};
+  const del=id=>{setTrips(p=>p.filter(t=>t.id!==id));if(activeId===id)setActiveId(null);};
+
+  return(<>
+    <style>{`
+      :root{--ink:#1a1a15;--mid:#52524a;--mu:#8c8c7e;--ru:#ccc8b8;--su:#edeada;--pg:#f6f3e8;--wh:#fefcf5;--ac:#3d5c30;--al:#c8d8bc;--ab:#eef3ea;--dg:#7a2e22;}
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+      body{background:#ddd9cc;font-family:Georgia,serif;color:var(--ink);min-height:100vh;font-size:16px;}
+      .app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--pg);display:flex;flex-direction:column;}
+      .app-header{background:var(--ink);padding:22px 20px 0;display:flex;align-items:flex-end;justify-content:space-between;}
+      .ht{margin-bottom:16px;}
+      .asub{font-family:monospace;font-size:10px;color:var(--mu);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:2px;}
+      .aname{font-family:monospace;font-size:22px;font-weight:500;color:#e8e4d4;letter-spacing:1px;text-transform:uppercase;}
+      .profile-btn{background:none;border:none;cursor:pointer;padding:8px 2px 14px;opacity:.7;}
+      .profile-btn:hover{opacity:1;}
+      .vpad{padding:20px 18px 80px;}
+      .vintro{font-size:14px;color:var(--mu);margin-bottom:20px;font-style:italic;}
+      .fg{border:1px solid var(--ru);border-radius:4px;padding:16px;background:var(--wh);margin-bottom:12px;}
+      .gl{font-family:monospace;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:12px;}
+      .hb{background:var(--su);border-radius:3px;padding:10px 12px;margin-bottom:8px;}
+      .ifs{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-top:8px;}
+      .fl{font-family:monospace;font-size:10px;color:var(--mu);white-space:nowrap;flex-shrink:0;}
+      .fi{width:100%;padding:9px 10px;border:1px solid var(--ru);border-radius:3px;font-family:Georgia,serif;font-size:15px;background:var(--wh);color:var(--ink);outline:none;}
+      .fi:focus{border-color:var(--ac);}
+      .fi.num{width:54px;text-align:center;font-family:monospace;flex-shrink:0;}
+      .fi.sh{width:82px;flex-shrink:0;}
+      .fi.ie{flex:1;padding:5px 8px;font-size:15px;}
+      .db{width:100%;padding:9px;border:1px dashed var(--ru);border-radius:3px;background:none;font-family:Georgia,serif;font-size:14px;color:var(--mu);cursor:pointer;margin-top:4px;}
+      .tb{background:none;border:none;font-family:monospace;font-size:12px;cursor:pointer;padding:0;color:var(--mu);flex-shrink:0;}
+      .tb.danger:hover{color:var(--dg);}
+      .pb{padding:11px 20px;background:var(--ink);color:#e8e4d4;border:none;border-radius:3px;font-family:monospace;font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+      .pb:hover{background:var(--ac);}
+      .pb.full{width:100%;margin-top:4px;}
+      .pb.sm{padding:7px 14px;font-size:11px;}
+      .gb{padding:11px 16px;background:none;border:1px solid var(--ru);border-radius:3px;font-family:monospace;font-size:12px;color:var(--mu);cursor:pointer;}
+      .fbs{display:flex;gap:8px;align-items:center;}
+      .smb{padding:9px 14px;background:var(--su);border:1px solid var(--ru);border-radius:3px;font-family:monospace;font-size:11px;color:var(--mid);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+      .smb:hover{background:var(--ink);color:#e8e4d4;border-color:var(--ink);}
+      .xb{background:none;border:none;font-size:22px;line-height:1;color:var(--ru);cursor:pointer;padding:0 2px;flex-shrink:0;}
+      .xb:hover{color:var(--dg);}
+      .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;}
+      .modal{background:var(--pg);border-radius:12px 12px 0 0;width:100%;max-height:85vh;display:flex;flex-direction:column;}
+      .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--ru);}
+      .modal-title{font-family:monospace;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--mu);}
+      .modal-close{background:none;border:none;font-size:28px;line-height:1;color:var(--mu);cursor:pointer;padding:0;}
+      .modal-body{overflow-y:auto;padding:18px 18px 40px;}
+      .tl{margin-bottom:14px;}
+      .trow{display:flex;align-items:center;padding:13px 12px;border:1px solid var(--ru);border-left:3px solid var(--ac);border-radius:4px;background:var(--wh);cursor:pointer;margin-bottom:8px;gap:10px;}
+      .trow:active{border-left-color:var(--ink);}
+      .trb{flex:1;}
+      .trn{font-weight:600;font-size:16px;}
+      .trm{font-family:monospace;font-size:11px;color:var(--mu);margin-top:3px;}
+      .mb{height:3px;background:var(--ru);border-radius:2px;margin-top:7px;}
+      .mf{height:100%;background:var(--ac);border-radius:2px;}
+      .em{font-size:14px;color:var(--mu);padding:16px 0;font-style:italic;}
+      .ntf{border:1px solid var(--ru);border-radius:4px;padding:18px;background:var(--wh);display:flex;flex-direction:column;gap:12px;}
+      .og{display:flex;flex-wrap:wrap;gap:6px;}
+      .og.two{display:grid;grid-template-columns:1fr 1fr;}
+      .ob{padding:9px 10px;border:1px solid var(--ru);border-radius:3px;background:var(--wh);font-family:monospace;font-size:11px;color:var(--mid);cursor:pointer;text-align:center;line-height:1.4;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:74px;}
+      .ob.on{background:var(--ink);color:#e8e4d4;border-color:var(--ink);}
+      .ob:active:not(.on){border-color:var(--ac);}
+      .ob-add{border-style:dashed;color:var(--mu);min-width:64px;}
+      .ob-edit{width:80px;font-size:12px;padding:5px 6px;}
+      .add-type-box{border:1px solid var(--al);border-radius:4px;padding:14px;background:var(--ab);}
+      .icon-picker{display:flex;flex-wrap:wrap;gap:5px;}
+      .ip-btn{padding:6px;border:1px solid var(--ru);border-radius:3px;background:var(--wh);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+      .ip-btn.on{border-color:var(--ac);background:var(--ab);}
+      .tn{font-family:monospace;font-size:10px;color:var(--ac);background:var(--ab);border:1px solid var(--al);border-radius:3px;padding:8px 10px;}
+      .dw{padding:0 0 80px;}
+      .bl{background:none;border:none;font-family:monospace;font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--mu);cursor:pointer;padding:18px 18px 0;display:block;}
+      .sb{background:var(--ab);border:1px solid var(--al);border-radius:4px;padding:12px 14px;margin:12px 18px;font-size:14px;color:var(--ac);display:flex;flex-direction:column;gap:10px;line-height:1.5;}
+      .sbb{display:flex;gap:10px;align-items:center;}
+      .dh{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 18px 16px;gap:12px;}
+      .dhl{flex:1;}
+      .dt{font-weight:600;font-size:23px;letter-spacing:-.3px;line-height:1.1;}
+      .dm{font-family:monospace;font-size:11px;color:var(--mu);margin-top:5px;}
+      .dpw{display:flex;align-items:center;gap:8px;margin-top:10px;}
+      .dpt{flex:1;height:4px;background:var(--ru);border-radius:2px;}
+      .dpf{height:100%;background:var(--ac);border-radius:2px;transition:width .3s;}
+      .dpl{font-family:monospace;font-size:11px;color:var(--mu);white-space:nowrap;}
+      .prog-sub{font-family:monospace;font-size:10px;color:var(--mu);margin-top:4px;}
+      .pb2{display:flex;flex-direction:column;gap:6px;padding:0 14px;}
+      .cb2{border:1px solid var(--ru);border-radius:4px;overflow:hidden;background:var(--wh);touch-action:pan-y;}
+      .cb2.complete{border-color:var(--al);background:var(--ab);}
+      .ch{width:100%;display:flex;align-items:center;padding:0 12px;gap:10px;}
+      .ch-btn{flex:1;display:flex;align-items:center;gap:10px;padding:14px 0;background:none;border:none;cursor:pointer;min-width:0;}
+      .dh2{font-size:22px;color:#d0cbb8;flex-shrink:0;user-select:none;touch-action:none;line-height:1;padding:14px 2px;cursor:grab;}
+      .dhs{font-size:18px;color:#d0cbb8;flex-shrink:0;user-select:none;touch-action:none;line-height:1;cursor:grab;}
+      .cat-ck{width:22px;height:22px;border:1.5px solid var(--ru);border-radius:3px;background:var(--wh);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--wh);flex-shrink:0;cursor:pointer;}
+      .cat-ck.on{background:var(--ac);border-color:var(--ac);}
+      .cat-ck.partial{background:var(--al);border-color:var(--ac);color:var(--ac);}
+      .cl{flex:1;font-family:monospace;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--mid);text-align:left;}
+      .cb2.complete .cl{color:var(--ac);}
+      .cc{font-family:monospace;font-size:11px;color:var(--mu);}
+      .cdb{font-family:monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ac);background:var(--al);padding:2px 9px;border-radius:10px;}
+      .cv{font-size:20px;color:var(--mu);width:20px;text-align:center;}
+      .cbdy{padding:2px 12px 14px;border-top:1px solid var(--ru);}
+      .cb2.complete .cbdy{border-top-color:var(--al);}
+      .row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #ede9d8;touch-action:none;}
+      .row:last-of-type{border-bottom:none;}
+      .row.done{opacity:.45;}
+      .row.done .ct{text-decoration:line-through;}
+      .ck{width:22px;height:22px;border:1.5px solid var(--ru);border-radius:3px;background:var(--wh);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--wh);flex-shrink:0;cursor:pointer;}
+      .ck.on{background:var(--ac);border-color:var(--ac);}
+      .ct{flex:1;font-size:15px;line-height:1.35;}
+      .ai{display:flex;gap:7px;margin-top:11px;padding:0 2px;}
+      .df{text-align:center;font-family:monospace;font-size:11px;color:var(--mu);padding:30px 0 10px;letter-spacing:2px;text-transform:uppercase;}
+    `}</style>
+    <div className="app">
+      {showProfile&&<ProfileModal profile={profile} setProfile={setProfile} onClose={()=>setShowProfile(false)}/>}
+      {trip
+        ?<TripDetail trip={trip} setTrips={setTrips} profile={profile} tripTypes={tripTypes} templates={templates} setTemplates={setTemplates} onBack={()=>setActiveId(null)}/>
+        :<>
+          <div className="app-header">
+            <div className="ht"><div className="asub">Reise</div><div className="aname">KLAR</div></div>
+            <button className="profile-btn" onClick={()=>setShowProfile(true)}><ProfileIcon/></button>
+          </div>
+          <div className="vpad">
+            <div className="tl">
+              {trips.length===0&&<div className="em">Ingen turar enno. Opprett ein nedanfor.</div>}
+              {trips.map(t=>{
+                const prog=calcProgress(t);
+                const tt=tripTypes.find(x=>x.id===t.tripTypeId)||{icon:"house",name:t.tripTypeId};
+                return(
+                  <div key={t.id} className="trow" onClick={()=>setActiveId(t.id)}>
+                    <TripIcon iconKey={tt.icon} size={36}/>
+                    <div className="trb">
+                      <div className="trn">{t.name}</div>
+                      <div className="trm">{t.days} {t.days===1?"dag":"d"} &middot; {tt.name} &middot; {t.season}</div>
+                      <div className="mb"><div className="mf" style={{width:prog.overall+"%"}}/></div>
+                    </div>
+                    <button className="xb" onClick={e=>{e.stopPropagation();del(t.id);}}>×</button>
+                  </div>
+                );
+              })}
+            </div>
+            {adding
+              ?<NewTripForm tripTypes={tripTypes} setTripTypes={setTripTypes} templates={templates} profile={profile} onSave={save} onCancel={()=>setAdding(false)}/>
+              :<button className="pb full" onClick={()=>setAdding(true)}>+ Ny tur</button>
+            }
+          </div>
+        </>
+      }
+    </div>
+  </>);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "Reiseklar",
+  "short_name": "Reiseklar",
+  "description": "Pakkeliste og reiseplanleggar",
+  "start_url": "/reise-klar/",
+  "scope": "/reise-klar/",
+  "display": "standalone",
+  "background_color": "#f6f3e8",
+  "theme_color": "#1a1a15",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/reise-klar/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/reise-klar/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
