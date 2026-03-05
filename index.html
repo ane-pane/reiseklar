@@ -20,7 +20,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useRef} = React;
+const {useState,useRef,useEffect} = React;
 
 function useStore(key,init){
   const [val,setVal]=useState(()=>{try{const s=localStorage.getItem(key);return s?JSON.parse(s):init;}catch{return init;}});
@@ -41,7 +41,7 @@ const ICON_DEFS={
   train:    {label:"Tog",render:(a,b)=><svg viewBox="0 0 48 48"><rect x="10" y="8" width="28" height="28" rx="4" fill={b}/><rect x="14" y="12" width="9" height="8" rx="1" fill="#eef3ea"/><rect x="25" y="12" width="9" height="8" rx="1" fill="#eef3ea"/><rect x="10" y="28" width="28" height="4" fill={a}/><circle cx="16" cy="40" r="5" fill={b}/><circle cx="32" cy="40" r="5" fill={b}/><circle cx="16" cy="40" r="2" fill={a}/><circle cx="32" cy="40" r="2" fill={a}/></svg>},
   plane:    {label:"Fly",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M24 6c-2 0-3 1-3 3v16L8 32v4l13-3v7l-4 3v3l7-2 7 2v-3l-4-3v-7l13 3v-4L27 25V9c0-2-1-3-3-3z" fill={b}/><path d="M8 36l13-3M40 36L27 33" stroke={a} strokeWidth="1.5"/></svg>},
   tent:     {label:"Camping",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M24 6L4 40h40L24 6z" fill={a}/><path d="M24 6L14 40h20L24 6z" fill={b}/><path d="M19 40v-8a5 5 0 0110 0v8" fill={a}/><line x1="2" y1="40" x2="46" y2="40" stroke={b} strokeWidth="2.5" strokeLinecap="round"/></svg>},
-  boat:     {label:"Båt/Ferje",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M24 8v22" stroke={b} strokeWidth="2.5" strokeLinecap="round"/><path d="M24 8l14 12H24z" fill={a}/><path d="M8 30h32l-4 8H12z" fill={b}/><path d="M4 42c4-2 8-2 12 0s8 2 12 0 8-2 12 0" fill="none" stroke={a} strokeWidth="2.5" strokeLinecap="round"/></svg>},
+  boat:     {label:"Bat/Ferje",render:(a,b)=><svg viewBox="0 0 48 48"><path d="M24 8v22" stroke={b} strokeWidth="2.5" strokeLinecap="round"/><path d="M24 8l14 12H24z" fill={a}/><path d="M8 30h32l-4 8H12z" fill={b}/><path d="M4 42c4-2 8-2 12 0s8 2 12 0 8-2 12 0" fill="none" stroke={a} strokeWidth="2.5" strokeLinecap="round"/></svg>},
   bike:     {label:"Sykkeltur",render:(a,b)=><svg viewBox="0 0 48 48"><circle cx="12" cy="34" r="8" fill="none" stroke={b} strokeWidth="3"/><circle cx="36" cy="34" r="8" fill="none" stroke={b} strokeWidth="3"/><path d="M20 14h8l4 12H16l4-8" fill={a}/><path d="M16 26l-4 8M28 26l8 8M24 14v-6" stroke={b} strokeWidth="2.5" strokeLinecap="round"/><circle cx="24" cy="8" r="3" fill={a}/></svg>},
 };
 const ICON_KEYS=Object.keys(ICON_DEFS);
@@ -70,57 +70,49 @@ function buildCats(tripTypeId,season,days){
   const I=t=>({id:uid(),text:t,checked:false});
   return [
     {id:"clothes",label:"Kle",items:[
-      I(w?"Ull-undertrøye":"T-skjorter / skjorter"),
+      I(w?"Ull-undertroye":"T-skjorter / skjorter"),
       I(w?"Ullstilongs":"Lette bukser / shorts"),
       I(w?"Varmt mellomlag":"Lett jakke eller hettejakke"),
-      I(w?"Vinterkåpe":"Regnjakke"),
-      I(`Truser (${days+1} stk)`),
-      I(`Sokkar (${days+1} par)`),
+      I(w?"Vinterkape":"Regnjakke"),
+      I("Truser ("+(days+1)+" stk)"),
+      I("Sokkar ("+(days+1)+" par)"),
       I("Pysj e.l."),
-      ...(noTent?[I("Tur/treningstøy"),I("Treningsbh")]:[]),
+      ...(noTent?[I("Tur/treningsstoey"),I("Treningsbh")]:[]),
       ...(city?[I("Finare antrekk til middag/kveld")]:[]),
-      ...(hike||bp?[I("Turbukser"),I("Tursko / fjelløvlar")]:[]),
-      ...(w&&(hike||bp)?[I("Dunjakke"),I("Varm lue"),I("Hanskar"),I("Halsrøyr")]:[]),
+      ...(hike||bp?[I("Turbukser"),I("Tursko / fjellovlar")]:[]),
+      ...(w&&(hike||bp)?[I("Dunjakke"),I("Varm lue"),I("Hanskar"),I("Halsr\u00f8yr")]:[]),
     ]},
     {id:"toiletries",label:"Toalettsaker",items:[
-      I("Tannbørste + tannkrem"),I("Deodorant"),I("Sjampo"),I("Briller"),
-      I("Linsevæske"),I("Linseetui"),
+      I("Tannb\u00f8rste + tannkrem"),I("Deodorant"),I("Sjampo"),I("Briller"),
+      I("Linsev\u00e6ske"),I("Linseetui"),
       ...(w?[]:[I("Solkrem")]),
-      ...(hike||bp?[I("Gnagsårplaster"),I("Enkelt førstehjelpsett"),I("Myggmiddel")]:[]),
+      ...(hike||bp?[I("Gnagsarplaster"),I("Enkelt f\u00f8rstehjelpsett"),I("Myggmiddel")]:[]),
     ]},
     {id:"gear",label:"Utstyr",items:[
-      ...(hike?[I("Telt"),I("Sovepose"),I("Liggeunderlag"),I("Turgåstavar"),I("Hovudlykt + reserve-batteri"),I("Kart & kompass"),I("Vassreinsing / filter"),I("Primus + gass")]:[]),
-      ...(bp?[I("Ryggsekk (hovud)"),I("Soveliner"),I("Reisehåndkle"),I("Hengelås (til låsbare skap)"),I("Hovudlykt"),I("Liten dagssekk")]:[]),
+      ...(hike?[I("Telt"),I("Sovepose"),I("Liggeunderlag"),I("Turg\u00e5stavar"),I("Hovudlykt + reserve-batteri"),I("Kart & kompass"),I("Vassreinsing / filter"),I("Primus + gass")]:[]),
+      ...(bp?[I("Ryggsekk (hovud)"),I("Soveliner"),I("Reisehandkle"),I("Hengelaas"),I("Hovudlykt"),I("Liten dagssekk")]:[]),
       ...(city?[I("Dagssekk / lita veske"),I("Komfortable spasersko"),I("Kompakt paraply")]:[]),
-      ...(road?[I("Vegkart / frakopla GPS"),I("Pledd til bilen"),I("Nødutstyr til bil")]:[]),
+      ...(road?[I("Vegkart / frakopla GPS"),I("Pledd til bilen"),I("N\u00f8dutstyr til bil")]:[]),
       ...(overnight?[I("Overnatningsveske")]:[]),
     ]},
     {id:"electronics",label:"Elektronikk",items:[
       I("Mobil + ladar"),I("Powerbank"),
-      ...(!overnight?[I("Reiseadapter (om nødvendig)")]:[]),
+      ...(!overnight?[I("Reiseadapter (om n\u00f8dvendig)")]:[]),
       ...(road?[I("Billader")]:[]),
       ...(hike||bp?[I("Kart lasta ned utan nett")]:[]),
       I("Pulsklokke + ladar"),I("Pulsbelte"),
       ...(noTent?[I("Earbuds"),I("Laptop + ladar")]:[]),
     ]},
     {id:"food",label:"Mat",items:[
-      I("Vassflaske"),
-      I("Ta med (kjølevarer):"),
-      I("Ta med (tørrvarer):"),
-      I("Handle:"),
-      I("Avklar restaurant:"),
+      I("Vassflaske"),I("Ta med (kj\u00f8levarer):"),I("Ta med (t\u00f8rrvarer):"),I("Handle:"),I("Avklar restaurant:"),
     ]},
     {id:"hygge",label:"Hygge",items:[
       I("Bok eller kindle"),
       ...(road?[I("Spelelister / podkastar lasta ned")]:[]),
     ]},
     {id:"peace",label:"Ro i sjela",items:[
-      I("ID / pass"),
-      I("Billettar tilgjengelege på mobil"),
-      I("Betalingskort"),
-      I("Mobil fulladd"),
-      I("Kattepass ordna"),
-      I("Nokon heime kjenner planen min"),
+      I("ID / pass"),I("Billettar tilgjengelege p\u00e5 mobil"),I("Betalingskort"),
+      I("Mobil fulladd"),I("Kattepass ordna"),I("Nokon heime kjenner planen min"),
     ]},
   ];
 }
@@ -134,9 +126,63 @@ function calcProgress(trip){
   return {overall:total>0?Math.round(done/total*100):0,done,total};
 }
 
-// ── PROFIL MODAL ──────────────────────────────────────────────────────────────
+// Touch drag hook - only activates from handle element
+function useTouchDrag(listRef, getItems, setItems) {
+  const state = useRef({});
+
+  function onHandleTouchStart(e, idx) {
+    e.preventDefault(); // prevent scroll only when dragging from handle
+    const row = e.currentTarget.closest('[data-draggable]') || e.currentTarget.parentElement;
+    const rect = row.getBoundingClientRect();
+    const touch = e.touches[0];
+
+    const clone = row.cloneNode(true);
+    clone.style.cssText = 'position:fixed;left:'+rect.left+'px;top:'+rect.top+'px;width:'+rect.width+'px;opacity:0.85;pointer-events:none;z-index:9999;background:#edeada;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.25);';
+    document.body.appendChild(clone);
+    row.style.opacity = '0.25';
+
+    state.current = {
+      active: true,
+      fromIdx: idx,
+      toIdx: idx,
+      clone,
+      row,
+      offsetY: touch.clientY - rect.top,
+    };
+  }
+
+  function onTouchMove(e) {
+    if (!state.current.active) return;
+    const touch = e.touches[0];
+    const s = state.current;
+    s.clone.style.top = (touch.clientY - s.offsetY) + 'px';
+
+    const rows = listRef.current ? listRef.current.querySelectorAll('[data-draggable]') : [];
+    rows.forEach((el, idx) => {
+      const r = el.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (touch.clientY > mid - 10 && touch.clientY < mid + 10) {
+        s.toIdx = idx;
+      }
+    });
+  }
+
+  function onTouchEnd() {
+    const s = state.current;
+    if (!s.active) return;
+    if (s.clone) s.clone.remove();
+    if (s.row) s.row.style.opacity = '';
+    if (s.fromIdx !== s.toIdx) {
+      setItems(dragReorder(getItems(), s.fromIdx, s.toIdx));
+    }
+    state.current = {};
+  }
+
+  return { onHandleTouchStart, onTouchMove, onTouchEnd };
+}
+
 function ProfileModal({profile,setProfile,onClose}){
-  const addMed=()=>setProfile(p=>({...p,meds:[...p.meds,{id:uid(),name:"",perDay:1,unit:"tablettar",buffer:1}]}));
+  const addMed=()=>setProfile(p=>({...p,meds:[...p.meds,{id:uid(),name:"",perDay:1,unit:"tablettar"}]}));
   const updMed=(id,f,v)=>setProfile(p=>({...p,meds:p.meds.map(m=>m.id===id?{...m,[f]:v}:m)}));
   const delMed=id=>setProfile(p=>({...p,meds:p.meds.filter(m=>m.id!==id)}));
   const addSup=()=>setProfile(p=>({...p,supplements:[...p.supplements,{id:uid(),name:"",perDay:1,unit:"kapslar"}]}));
@@ -145,23 +191,18 @@ function ProfileModal({profile,setProfile,onClose}){
   return(
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" onClick={e=>e.stopPropagation()}>
-        <div className="modal-head">
-          <span className="modal-title">Helse</span>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+        <div className="modal-head"><span className="modal-title">Helse</span><button className="modal-close" onClick={onClose}>x</button></div>
         <div className="modal-body">
-          <p className="vintro">Set ein gong — vert brukt på alle turar automatisk.</p>
+          <p className="vintro">Set ein gong - vert brukt pa alle turar automatisk.</p>
           <div className="fg"><div className="gl">Reseptmedisinar</div>
             {profile.meds.map(m=>(
               <div key={m.id} className="hb">
-                <input className="fi" placeholder="Namn på medisin" value={m.name} onChange={e=>updMed(m.id,"name",e.target.value)}/>
+                <input className="fi" placeholder="Namn pa medisin" value={m.name} onChange={e=>updMed(m.id,"name",e.target.value)}/>
                 <div className="ifs">
                   <span className="fl">Per dag</span>
                   <input className="fi num" type="number" min="0.5" step="0.5" value={m.perDay} onChange={e=>updMed(m.id,"perDay",parseFloat(e.target.value)||1)}/>
                   <span className="fl">Eining</span>
                   <input className="fi sh" placeholder="tablettar" value={m.unit} onChange={e=>updMed(m.id,"unit",e.target.value)}/>
-                  <span className="fl">Buffer</span>
-                  <input className="fi num" type="number" min="0" value={m.buffer} onChange={e=>updMed(m.id,"buffer",parseInt(e.target.value)||0)}/>
                   <button className="tb danger" onClick={()=>delMed(m.id)}>Fjern</button>
                 </div>
               </div>
@@ -171,7 +212,7 @@ function ProfileModal({profile,setProfile,onClose}){
           <div className="fg"><div className="gl">Kosttilskot</div>
             {profile.supplements.map(s=>(
               <div key={s.id} className="hb">
-                <input className="fi" placeholder="Namn på tilskot" value={s.name} onChange={e=>updSup(s.id,"name",e.target.value)}/>
+                <input className="fi" placeholder="Namn pa tilskot" value={s.name} onChange={e=>updSup(s.id,"name",e.target.value)}/>
                 <div className="ifs">
                   <span className="fl">Per dag</span>
                   <input className="fi num" type="number" min="1" value={s.perDay} onChange={e=>updSup(s.id,"perDay",parseInt(e.target.value)||1)}/>
@@ -189,7 +230,6 @@ function ProfileModal({profile,setProfile,onClose}){
   );
 }
 
-// ── NY TUR FORM ───────────────────────────────────────────────────────────────
 function NewTripForm({tripTypes,setTripTypes,templates,profile,onSave,onCancel}){
   const [name,setName]=useState("");
   const [ttId,setTtId]=useState(tripTypes[0]?.id||"");
@@ -202,102 +242,62 @@ function NewTripForm({tripTypes,setTripTypes,templates,profile,onSave,onCancel})
   const [editingTypeId,setEditingTypeId]=useState(null);
   const [editTypeName,setEditTypeName]=useState("");
   const selTt=tripTypes.find(t=>t.id===ttId)||tripTypes[0];
-
-  const addType=()=>{
-    if(!newTypeName.trim())return;
-    const newId=uid();
-    setTripTypes(p=>[...p,{id:newId,name:newTypeName.trim(),icon:newTypeIcon,cloneFrom:newTypeClone}]);
-    setTtId(newId);setNewTypeName("");setAddingType(false);
-  };
+  const addType=()=>{if(!newTypeName.trim())return;const newId=uid();setTripTypes(p=>[...p,{id:newId,name:newTypeName.trim(),icon:newTypeIcon,cloneFrom:newTypeClone}]);setTtId(newId);setNewTypeName("");setAddingType(false);};
   const saveTypeEdit=id=>{setTripTypes(p=>p.map(t=>t.id===id?{...t,name:editTypeName.trim()||t.name}:t));setEditingTypeId(null);};
-
   const save=()=>{
     if(!name.trim())return;
-    const d=parseInt(days)||1;
-    const tt=tripTypes.find(t=>t.id===ttId)||tripTypes[0];
-    const key=`${ttId}__${sea}`;
+    const d=parseInt(days)||1,tt=tripTypes.find(t=>t.id===ttId)||tripTypes[0],key=ttId+"__"+sea;
     let cats;
     if(templates[key])cats=templates[key].map(c=>({...c,items:c.items.map(i=>({...i,id:uid(),checked:false}))}));
-    else if(tt.cloneFrom){const sk=`${tt.cloneFrom}__${sea}`;cats=templates[sk]?templates[sk].map(c=>({...c,items:c.items.map(i=>({...i,id:uid(),checked:false}))})):buildCats(tt.cloneFrom,sea,d);}
+    else if(tt.cloneFrom){const sk=tt.cloneFrom+"__"+sea;cats=templates[sk]?templates[sk].map(c=>({...c,items:c.items.map(i=>({...i,id:uid(),checked:false}))})):buildCats(tt.cloneFrom,sea,d);}
     else cats=buildCats(ttId,sea,d);
-    const wh=cats.map(c=>{
-      if(c.id!=="toiletries")return c;
-      return{...c,items:[...c.items,
-        ...profile.meds.filter(m=>m.name).map(m=>({id:uid(),checked:false,text:`${m.name}: ${Math.ceil(m.perDay*d)+(m.buffer||0)} ${m.unit}`})),
-        ...profile.supplements.filter(s=>s.name).map(s=>({id:uid(),checked:false,text:`${s.name}: ${Math.ceil(s.perDay*d)} ${s.unit}`})),
-      ]};
-    });
+    const wh=cats.map(c=>{if(c.id!=="toiletries")return c;return{...c,items:[...c.items,...profile.meds.filter(m=>m.name).map(m=>({id:uid(),checked:false,text:m.name+": "+Math.ceil(m.perDay*d)+" "+m.unit})),...profile.supplements.filter(s=>s.name).map(s=>({id:uid(),checked:false,text:s.name+": "+Math.ceil(s.perDay*d)+" "+s.unit}))]};});
     onSave({id:uid(),name:name.trim(),tripTypeId:ttId,season:sea,days:d,categories:wh});
   };
-
   return(
     <div className="ntf">
       <div className="gl" style={{marginBottom:12}}>Ny tur</div>
       <input className="fi" placeholder="Turnamn (t.d. Bergen-helg)" value={name} onChange={e=>setName(e.target.value)} autoFocus/>
       <div className="gl" style={{marginTop:4}}>Turtype</div>
       <div className="og">
-        {tripTypes.map(t=>(
-          <div key={t.id}>
-            {editingTypeId===t.id
-              ?<input className="fi ob-edit" value={editTypeName} onChange={e=>setEditTypeName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveTypeEdit(t.id);if(e.key==="Escape")setEditingTypeId(null);}} onBlur={()=>saveTypeEdit(t.id)} autoFocus/>
-              :<button className={`ob ${ttId===t.id?"on":""}`} onClick={()=>setTtId(t.id)} onDoubleClick={()=>{setEditingTypeId(t.id);setEditTypeName(t.name);}}>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
-                  <TripIcon iconKey={t.icon} size={24} a={ttId===t.id?"#eef3ea":DT_A} b={ttId===t.id?"#eef3ea":DT_B}/>
-                </div>
-                {t.name}
-              </button>
-            }
-          </div>
-        ))}
-        {!addingType&&(
-          <button className="ob ob-add" onClick={()=>setAddingType(true)}>
-            <div style={{fontSize:24,lineHeight:1,color:"#8c8c7e",marginBottom:2}}>+</div>
-            <span>Ny type</span>
-          </button>
-        )}
+        {tripTypes.map(t=>(<div key={t.id}>
+          {editingTypeId===t.id
+            ?<input className="fi ob-edit" value={editTypeName} onChange={e=>setEditTypeName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveTypeEdit(t.id);if(e.key==="Escape")setEditingTypeId(null);}} onBlur={()=>saveTypeEdit(t.id)} autoFocus/>
+            :<button className={"ob"+(ttId===t.id?" on":"")} onClick={()=>setTtId(t.id)} onDoubleClick={()=>{setEditingTypeId(t.id);setEditTypeName(t.name);}}>
+              <div style={{display:"flex",justifyContent:"center",marginBottom:4}}><TripIcon iconKey={t.icon} size={24} a={ttId===t.id?"#eef3ea":DT_A} b={ttId===t.id?"#eef3ea":DT_B}/></div>
+              {t.name}
+            </button>
+          }
+        </div>))}
+        {!addingType&&<button className="ob ob-add" onClick={()=>setAddingType(true)}><div style={{fontSize:24,lineHeight:1,color:"#8c8c7e",marginBottom:2}}>+</div><span>Ny type</span></button>}
       </div>
       {addingType&&(
         <div className="add-type-box">
-          <input className="fi" placeholder="Namn på turtype" value={newTypeName} onChange={e=>setNewTypeName(e.target.value)} autoFocus/>
+          <input className="fi" placeholder="Namn pa turtype" value={newTypeName} onChange={e=>setNewTypeName(e.target.value)} autoFocus/>
           <div className="gl" style={{marginTop:10,marginBottom:6}}>Vel ikon</div>
-          <div className="icon-picker">
-            {ICON_KEYS.map(k=>(
-              <button key={k} className={`ip-btn ${newTypeIcon===k?"on":""}`} onClick={()=>setNewTypeIcon(k)}>
-                <TripIcon iconKey={k} size={26}/>
-              </button>
-            ))}
-          </div>
-          <div className="gl" style={{marginTop:10,marginBottom:6}}>Klon liste frå</div>
-          <select className="fi" value={newTypeClone} onChange={e=>setNewTypeClone(e.target.value)}>
-            {tripTypes.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-          <div className="fbs" style={{marginTop:10}}>
-            <button className="pb sm" onClick={addType}>Legg til</button>
-            <button className="gb" onClick={()=>setAddingType(false)}>Avbryt</button>
-          </div>
+          <div className="icon-picker">{ICON_KEYS.map(k=>(<button key={k} className={"ip-btn"+(newTypeIcon===k?" on":"")} onClick={()=>setNewTypeIcon(k)}><TripIcon iconKey={k} size={26}/></button>))}</div>
+          <div className="gl" style={{marginTop:10,marginBottom:6}}>Klon liste fra</div>
+          <select className="fi" value={newTypeClone} onChange={e=>setNewTypeClone(e.target.value)}>{tripTypes.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
+          <div className="fbs" style={{marginTop:10}}><button className="pb sm" onClick={addType}>Legg til</button><button className="gb" onClick={()=>setAddingType(false)}>Avbryt</button></div>
         </div>
       )}
-      <div className="og two" style={{marginTop:4}}>
-        {SEASONS.map(s=><button key={s} className={`ob ${sea===s?"on":""}`} onClick={()=>setSea(s)}>{s}</button>)}
-      </div>
+      <div className="og two" style={{marginTop:4}}>{SEASONS.map(s=><button key={s} className={"ob"+(sea===s?" on":"")} onClick={()=>setSea(s)}>{s}</button>)}</div>
       <div className="ifs"><span className="fl">Dagar vekke</span><input className="fi num" type="number" min="1" value={days} onChange={e=>setDays(e.target.value)}/></div>
-      {templates[`${ttId}__${sea}`]&&<div className="tn">Brukar lagra mal for {selTt?.name} / {sea}</div>}
+      {templates[ttId+"__"+sea]&&<div className="tn">Brukar lagra mal for {selTt&&selTt.name} / {sea}</div>}
       <div className="fbs"><button className="pb" onClick={save}>Opprett tur</button><button className="gb" onClick={onCancel}>Avbryt</button></div>
-      <p className="vintro" style={{marginBottom:0}}>Dobbeltklikk på ein turtype for å endre namnet.</p>
+      <p className="vintro" style={{marginBottom:0}}>Dobbeltklikk pa ein turtype for a endre namnet.</p>
     </div>
   );
 }
 
-// ── TURDETALJ ─────────────────────────────────────────────────────────────────
 function TripDetail({trip,setTrips,profile,tripTypes,templates,setTemplates,onBack}){
   const [open,setOpen]=useState(()=>{const o={};(trip.categories||[]).forEach(c=>{o[c.id]=true;});return o;});
   const [newItems,setNewItems]=useState({});
   const [editing,setEditing]=useState(null);
   const [editTxt,setEditTxt]=useState("");
   const [askSave,setAskSave]=useState(false);
-  const dragRef=useRef({});
-  const touchRef=useRef({});
-  const catListRef=useRef();
+  const mouseDragRef=useRef({});
+  const catListRef=useRef(null);
 
   const upd=fn=>setTrips(p=>p.map(t=>t.id===trip.id?fn(t):t));
   const toggleCat=cid=>{const cat=(trip.categories||[]).find(c=>c.id===cid);if(!cat)return;const all=cat.items.every(i=>i.checked);upd(t=>({...t,categories:t.categories.map(c=>c.id!==cid?c:{...c,items:c.items.map(i=>({...i,checked:!all}))})}));};
@@ -306,94 +306,39 @@ function TripDetail({trip,setTrips,profile,tripTypes,templates,setTemplates,onBa
   const addItem=cid=>{const t=(newItems[cid]||"").trim();if(!t)return;upd(tr=>({...tr,categories:tr.categories.map(c=>c.id!==cid?c:{...c,items:[...c.items,{id:uid(),text:t,checked:false}]})}));setNewItems(p=>({...p,[cid]:""}));};
   const saveEdit=()=>{if(!editing||!editTxt.trim())return;upd(t=>({...t,categories:t.categories.map(c=>c.id!==editing.cid?c:{...c,items:c.items.map(i=>i.id!==editing.iid?i:{...i,text:editTxt.trim()})})}));setEditing(null);setEditTxt("");};
 
-  // Mouse drag for categories
+  // Mouse drag - categories
   const catMouseDrag=(ci)=>({
     draggable:true,
-    onDragStart:e=>{dragRef.current={type:"cat",from:ci};e.dataTransfer.effectAllowed="move";},
-    onDragEnter:()=>{if(dragRef.current.type==="cat")dragRef.current.to=ci;},
+    onDragStart:e=>{mouseDragRef.current={type:"cat",from:ci};e.dataTransfer.effectAllowed="move";},
+    onDragEnter:e=>{e.preventDefault();if(mouseDragRef.current.type==="cat")mouseDragRef.current.to=ci;},
     onDragOver:e=>e.preventDefault(),
-    onDragEnd:()=>{const s=dragRef.current;if(s.type==="cat"&&s.from!==s.to&&s.to!==undefined)upd(t=>({...t,categories:dragReorder(t.categories,s.from,s.to)}));dragRef.current={};}
+    onDragEnd:()=>{const s=mouseDragRef.current;if(s.type==="cat"&&s.to!==undefined&&s.from!==s.to)upd(t=>({...t,categories:dragReorder(t.categories,s.from,s.to)}));mouseDragRef.current={};}
   });
 
-  // Mouse drag for items
+  // Mouse drag - items
   const itemMouseDrag=(cid,ii)=>({
     draggable:true,
-    onDragStart:e=>{dragRef.current={type:"item",cid,from:ii};e.dataTransfer.effectAllowed="move";},
-    onDragEnter:()=>{if(dragRef.current.type==="item"&&dragRef.current.cid===cid)dragRef.current.to=ii;},
+    onDragStart:e=>{mouseDragRef.current={type:"item",cid,from:ii};e.dataTransfer.effectAllowed="move";},
+    onDragEnter:e=>{e.preventDefault();if(mouseDragRef.current.type==="item"&&mouseDragRef.current.cid===cid)mouseDragRef.current.to=ii;},
     onDragOver:e=>e.preventDefault(),
-    onDragEnd:()=>{const s=dragRef.current;if(s.type==="item"&&s.cid===cid&&s.from!==s.to&&s.to!==undefined)upd(t=>({...t,categories:t.categories.map(c=>c.id!==cid?c:{...c,items:dragReorder(c.items,s.from,s.to)})}));dragRef.current={};}
+    onDragEnd:()=>{const s=mouseDragRef.current;if(s.type==="item"&&s.cid===cid&&s.to!==undefined&&s.from!==s.to)upd(t=>({...t,categories:t.categories.map(c=>c.id!==cid?c:{...c,items:dragReorder(c.items,s.from,s.to)})}));mouseDragRef.current={};}
   });
 
-  // Touch drag for categories
-  const catTouchStart=(e,ci)=>{
-    const el=e.currentTarget.closest(".cb2");
-    const r=el.getBoundingClientRect(),t=e.touches[0];
-    const clone=el.cloneNode(true);
-    clone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;opacity:0.85;pointer-events:none;z-index:9999;background:#edeada;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.2);`;
-    document.body.appendChild(clone);
-    el.style.opacity="0.25";
-    touchRef.current={type:"cat",from:ci,to:ci,clone,el,offsetY:t.clientY-r.top,listEl:catListRef.current};
-  };
-  const catTouchMove=(e)=>{
-    const s=touchRef.current;if(!s.clone||s.type!=="cat")return;
-    e.preventDefault();
-    const t=e.touches[0];
-    s.clone.style.top=(t.clientY-s.offsetY)+"px";
-    const items=s.listEl?.querySelectorAll(".cb2");
-    if(!items)return;
-    items.forEach((el,idx)=>{const r=el.getBoundingClientRect();if(t.clientY>r.top+10&&t.clientY<r.bottom-10)s.to=idx;});
-  };
-  const catTouchEnd=()=>{
-    const s=touchRef.current;
-    if(s.clone){s.clone.remove();}
-    if(s.el)s.el.style.opacity="";
-    if(s.type==="cat"&&s.from!==s.to)upd(t=>({...t,categories:dragReorder(t.categories,s.from,s.to)}));
-    touchRef.current={};
-  };
-
-  // Touch drag for items
-  const itemTouchStart=(e,cid,ii,listEl)=>{
-    const el=e.currentTarget.closest(".row");
-    const r=el.getBoundingClientRect(),t=e.touches[0];
-    const clone=el.cloneNode(true);
-    clone.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;opacity:0.85;pointer-events:none;z-index:9999;background:#edeada;border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.2);`;
-    document.body.appendChild(clone);
-    el.style.opacity="0.25";
-    touchRef.current={type:"item",cid,from:ii,to:ii,clone,el,offsetY:t.clientY-r.top,listEl};
-  };
-  const itemTouchMove=(e)=>{
-    const s=touchRef.current;if(!s.clone||s.type!=="item")return;
-    e.preventDefault();
-    const t=e.touches[0];
-    s.clone.style.top=(t.clientY-s.offsetY)+"px";
-    const items=s.listEl?.querySelectorAll(".row");
-    if(!items)return;
-    items.forEach((el,idx)=>{const r=el.getBoundingClientRect();if(t.clientY>r.top+6&&t.clientY<r.bottom-6)s.to=idx;});
-  };
-  const itemTouchEnd=()=>{
-    const s=touchRef.current;
-    if(s.clone)s.clone.remove();
-    if(s.el)s.el.style.opacity="";
-    if(s.type==="item"&&s.from!==s.to)upd(t=>({...t,categories:t.categories.map(c=>c.id!==s.cid?c:{...c,items:dragReorder(c.items,s.from,s.to)})}));
-    touchRef.current={};
-  };
+  // Touch drag for categories - only from handle
+  const catTouchDrag = useTouchDrag(
+    catListRef,
+    () => trip.categories || [],
+    (newCats) => upd(t => ({...t, categories: newCats}))
+  );
 
   const prog=calcProgress(trip);
   const tt=tripTypes.find(t=>t.id===trip.tripTypeId)||{icon:"house",name:""};
-
-  const saveTemplate=()=>{
-    setTemplates(p=>({...p,[`${trip.tripTypeId}__${trip.season}`]:trip.categories.map(c=>({...c,items:c.items.map(i=>({...i,checked:false}))}))}));
-    setAskSave(false);onBack();
-  };
+  const saveTemplate=()=>{setTemplates(p=>({...p,[trip.tripTypeId+"__"+trip.season]:trip.categories.map(c=>({...c,items:c.items.map(i=>({...i,checked:false}))}))}));setAskSave(false);onBack();};
 
   return(
-    <div className="dw">
+    <div className="dw" onTouchMove={catTouchDrag.onTouchMove} onTouchEnd={catTouchDrag.onTouchEnd}>
       <button className="bl" onClick={()=>prog.done>0?setAskSave(true):onBack()}>&larr; Alle turar</button>
-      {askSave&&(
-        <div className="sb">Lagre endringar i «{tt.name} / {trip.season}»-malen til neste gong?
-          <div className="sbb"><button className="pb sm" onClick={saveTemplate}>Lagre mal</button><button className="tb" onClick={()=>{setAskSave(false);onBack();}}>Hopp over</button></div>
-        </div>
-      )}
+      {askSave&&<div className="sb">Lagre endringar i malen &laquo;{tt.name} / {trip.season}&raquo; til neste gong?<div className="sbb"><button className="pb sm" onClick={saveTemplate}>Lagre mal</button><button className="tb" onClick={()=>{setAskSave(false);onBack();}}>Hopp over</button></div></div>}
       <div className="dh">
         <div className="dhl">
           <div className="dt">{trip.name}</div>
@@ -403,57 +348,47 @@ function TripDetail({trip,setTrips,profile,tripTypes,templates,setTemplates,onBa
         </div>
         <TripIcon iconKey={tt.icon} size={52}/>
       </div>
-
       <div className="pb2" ref={catListRef}>
         {(trip.categories||[]).map((cat,ci)=>{
-          const isOpen=open[cat.id];
-          const cd=cat.items.filter(i=>i.checked).length;
-          const allDone=cat.items.length>0&&cd===cat.items.length;
-          const md=catMouseDrag(ci);
-          const itemListRef={current:null};
-
+          const isOpen=open[cat.id],cd=cat.items.filter(i=>i.checked).length,allDone=cat.items.length>0&&cd===cat.items.length;
+          // Per-category item touch drag
+          const itemListRef = {current: null};
+          const itemTouchDrag = useTouchDrag(
+            itemListRef,
+            () => (trip.categories.find(c=>c.id===cat.id)||cat).items,
+            (newItems2) => upd(t=>({...t,categories:t.categories.map(c=>c.id!==cat.id?c:{...c,items:newItems2})}))
+          );
           return(
-            <div key={cat.id} className={`cb2 ${allDone?"complete":""}`}
-              {...md}
-              onTouchStart={e=>catTouchStart(e,ci)}
-              onTouchMove={catTouchMove}
-              onTouchEnd={catTouchEnd}
-            >
+            <div key={cat.id} data-draggable="true" className={"cb2"+(allDone?" complete":"")} {...catMouseDrag(ci)}>
               <div className="ch">
-                <span className="dh2">⠿</span>
-                <button className={`cat-ck ${allDone?"on":cd>0?"partial":""}`} onClick={e=>{e.stopPropagation();toggleCat(cat.id);}}>
-                  {allDone?"✓":cd>0?"–":""}
-                </button>
+                {/* Touch drag handle for category - only this triggers touch drag */}
+                <span className="dh2" onTouchStart={e=>catTouchDrag.onHandleTouchStart(e,ci)}>&#10003;&#10003;</span>
+                <button className={"cat-ck"+(allDone?" on":cd>0?" partial":"")} onClick={e=>{e.stopPropagation();toggleCat(cat.id);}}>{allDone?"\u2713":cd>0?"\u2013":""}</button>
                 <button className="ch-btn" onClick={()=>setOpen(p=>({...p,[cat.id]:!p[cat.id]}))}>
                   <span className="cl">{cat.label}</span>
                   {allDone?<span className="cdb">ferdig</span>:<span className="cc">{cd}/{cat.items.length}</span>}
-                  <span className="cv">{isOpen?"−":"+"}</span>
+                  <span className="cv">{isOpen?"\u2212":"+"}</span>
                 </button>
               </div>
               {isOpen&&(
-                <div className="cbdy" ref={r=>itemListRef.current=r}>
+                <div className="cbdy" ref={r=>itemListRef.current=r} onTouchMove={itemTouchDrag.onTouchMove} onTouchEnd={itemTouchDrag.onTouchEnd}>
                   {cat.items.map((item,ii)=>{
                     const isEd=editing&&editing.cid===cat.id&&editing.iid===item.id;
-                    const imd=itemMouseDrag(cat.id,ii);
                     return(
-                      <div key={item.id} className={`row ${item.checked?"done":""}`}
-                        {...imd}
-                        onTouchStart={e=>itemTouchStart(e,cat.id,ii,itemListRef.current)}
-                        onTouchMove={itemTouchMove}
-                        onTouchEnd={itemTouchEnd}
-                      >
-                        <span className="dhs">⠿</span>
-                        <button className={`ck ${item.checked?"on":""}`} onClick={()=>toggleItem(cat.id,item.id)}>{item.checked?"✓":""}</button>
+                      <div key={item.id} data-draggable="true" className={"row"+(item.checked?" done":"")} {...itemMouseDrag(cat.id,ii)}>
+                        {/* Touch drag handle for item - only this triggers touch drag */}
+                        <span className="dhs" onTouchStart={e=>itemTouchDrag.onHandleTouchStart(e,ii)}>&#8942;</span>
+                        <button className={"ck"+(item.checked?" on":"")} onClick={()=>toggleItem(cat.id,item.id)}>{item.checked?"\u2713":""}</button>
                         {isEd
                           ?<input className="fi ie" value={editTxt} onChange={e=>setEditTxt(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditing(null);}} onBlur={saveEdit} autoFocus/>
                           :<span className="ct" onDoubleClick={()=>{setEditing({cid:cat.id,iid:item.id});setEditTxt(item.text);}}>{item.text}</span>
                         }
-                        <button className="xb" onClick={()=>delItem(cat.id,item.id)}>×</button>
+                        <button className="xb" onClick={()=>delItem(cat.id,item.id)}>x</button>
                       </div>
                     );
                   })}
                   <div className="ai">
-                    <input className="fi" placeholder="Legg til element…" value={newItems[cat.id]||""} onChange={e=>setNewItems(p=>({...p,[cat.id]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addItem(cat.id)}/>
+                    <input className="fi" placeholder="Legg til element..." value={newItems[cat.id]||""} onChange={e=>setNewItems(p=>({...p,[cat.id]:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&addItem(cat.id)}/>
                     <button className="smb" onClick={()=>addItem(cat.id)}>Legg til</button>
                   </div>
                 </div>
@@ -467,7 +402,6 @@ function TripDetail({trip,setTrips,profile,tripTypes,templates,setTemplates,onBa
   );
 }
 
-// ── APP ───────────────────────────────────────────────────────────────────────
 function App(){
   const [trips,setTrips]=useStore("rk2_trips",[]);
   const [profile,setProfile]=useStore("rk2_profile",DEF_PROFILE);
@@ -476,11 +410,9 @@ function App(){
   const [activeId,setActiveId]=useState(null);
   const [adding,setAdding]=useState(false);
   const [showProfile,setShowProfile]=useState(false);
-
   const trip=trips.find(t=>t.id===activeId);
   const save=t=>{setTrips(p=>[...p,t]);setActiveId(t.id);setAdding(false);};
   const del=id=>{setTrips(p=>p.filter(t=>t.id!==id));if(activeId===id)setActiveId(null);};
-
   return(<>
     <style>{`
       :root{--ink:#1a1a15;--mid:#52524a;--mu:#8c8c7e;--ru:#ccc8b8;--su:#edeada;--pg:#f6f3e8;--wh:#fefcf5;--ac:#3d5c30;--al:#c8d8bc;--ab:#eef3ea;--dg:#7a2e22;}
@@ -492,32 +424,28 @@ function App(){
       .asub{font-family:monospace;font-size:10px;color:var(--mu);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:2px;}
       .aname{font-family:monospace;font-size:22px;font-weight:500;color:#e8e4d4;letter-spacing:1px;text-transform:uppercase;}
       .profile-btn{background:none;border:none;cursor:pointer;padding:8px 2px 14px;opacity:.7;}
-      .profile-btn:hover{opacity:1;}
       .vpad{padding:20px 18px 80px;}
       .vintro{font-size:14px;color:var(--mu);margin-bottom:20px;font-style:italic;}
       .fg{border:1px solid var(--ru);border-radius:4px;padding:16px;background:var(--wh);margin-bottom:12px;}
       .gl{font-family:monospace;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:12px;}
       .hb{background:var(--su);border-radius:3px;padding:10px 12px;margin-bottom:8px;}
-      .ifs{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-top:8px;}
-      .fl{font-family:monospace;font-size:10px;color:var(--mu);white-space:nowrap;flex-shrink:0;}
+      .ifs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;}
+      .fl{font-family:monospace;font-size:10px;color:var(--mu);white-space:nowrap;}
       .fi{width:100%;padding:9px 10px;border:1px solid var(--ru);border-radius:3px;font-family:Georgia,serif;font-size:15px;background:var(--wh);color:var(--ink);outline:none;}
       .fi:focus{border-color:var(--ac);}
       .fi.num{width:54px;text-align:center;font-family:monospace;flex-shrink:0;}
-      .fi.sh{width:82px;flex-shrink:0;}
+      .fi.sh{width:90px;flex-shrink:0;}
       .fi.ie{flex:1;padding:5px 8px;font-size:15px;}
       .db{width:100%;padding:9px;border:1px dashed var(--ru);border-radius:3px;background:none;font-family:Georgia,serif;font-size:14px;color:var(--mu);cursor:pointer;margin-top:4px;}
       .tb{background:none;border:none;font-family:monospace;font-size:12px;cursor:pointer;padding:0;color:var(--mu);flex-shrink:0;}
-      .tb.danger:hover{color:var(--dg);}
+      .tb.danger{color:#a05050;}
       .pb{padding:11px 20px;background:var(--ink);color:#e8e4d4;border:none;border-radius:3px;font-family:monospace;font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
-      .pb:hover{background:var(--ac);}
       .pb.full{width:100%;margin-top:4px;}
       .pb.sm{padding:7px 14px;font-size:11px;}
       .gb{padding:11px 16px;background:none;border:1px solid var(--ru);border-radius:3px;font-family:monospace;font-size:12px;color:var(--mu);cursor:pointer;}
       .fbs{display:flex;gap:8px;align-items:center;}
       .smb{padding:9px 14px;background:var(--su);border:1px solid var(--ru);border-radius:3px;font-family:monospace;font-size:11px;color:var(--mid);cursor:pointer;white-space:nowrap;flex-shrink:0;}
-      .smb:hover{background:var(--ink);color:#e8e4d4;border-color:var(--ink);}
       .xb{background:none;border:none;font-size:22px;line-height:1;color:var(--ru);cursor:pointer;padding:0 2px;flex-shrink:0;}
-      .xb:hover{color:var(--dg);}
       .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;}
       .modal{background:var(--pg);border-radius:12px 12px 0 0;width:100%;max-height:85vh;display:flex;flex-direction:column;}
       .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--ru);}
@@ -526,7 +454,6 @@ function App(){
       .modal-body{overflow-y:auto;padding:18px 18px 40px;}
       .tl{margin-bottom:14px;}
       .trow{display:flex;align-items:center;padding:13px 12px;border:1px solid var(--ru);border-left:3px solid var(--ac);border-radius:4px;background:var(--wh);cursor:pointer;margin-bottom:8px;gap:10px;}
-      .trow:active{border-left-color:var(--ink);}
       .trb{flex:1;}
       .trn{font-weight:600;font-size:16px;}
       .trm{font-family:monospace;font-size:11px;color:var(--mu);margin-top:3px;}
@@ -538,7 +465,6 @@ function App(){
       .og.two{display:grid;grid-template-columns:1fr 1fr;}
       .ob{padding:9px 10px;border:1px solid var(--ru);border-radius:3px;background:var(--wh);font-family:monospace;font-size:11px;color:var(--mid);cursor:pointer;text-align:center;line-height:1.4;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:74px;}
       .ob.on{background:var(--ink);color:#e8e4d4;border-color:var(--ink);}
-      .ob:active:not(.on){border-color:var(--ac);}
       .ob-add{border-style:dashed;color:var(--mu);min-width:64px;}
       .ob-edit{width:80px;font-size:12px;padding:5px 6px;}
       .add-type-box{border:1px solid var(--al);border-radius:4px;padding:14px;background:var(--ab);}
@@ -560,12 +486,12 @@ function App(){
       .dpl{font-family:monospace;font-size:11px;color:var(--mu);white-space:nowrap;}
       .prog-sub{font-family:monospace;font-size:10px;color:var(--mu);margin-top:4px;}
       .pb2{display:flex;flex-direction:column;gap:6px;padding:0 14px;}
-      .cb2{border:1px solid var(--ru);border-radius:4px;overflow:hidden;background:var(--wh);touch-action:pan-y;}
+      .cb2{border:1px solid var(--ru);border-radius:4px;overflow:hidden;background:var(--wh);}
       .cb2.complete{border-color:var(--al);background:var(--ab);}
       .ch{width:100%;display:flex;align-items:center;padding:0 12px;gap:10px;}
       .ch-btn{flex:1;display:flex;align-items:center;gap:10px;padding:14px 0;background:none;border:none;cursor:pointer;min-width:0;}
-      .dh2{font-size:22px;color:#d0cbb8;flex-shrink:0;user-select:none;touch-action:none;line-height:1;padding:14px 2px;cursor:grab;}
-      .dhs{font-size:18px;color:#d0cbb8;flex-shrink:0;user-select:none;touch-action:none;line-height:1;cursor:grab;}
+      .dh2{font-size:20px;color:#d0cbb8;flex-shrink:0;user-select:none;line-height:1;padding:14px 4px;cursor:grab;touch-action:none;min-width:32px;text-align:center;}
+      .dhs{font-size:20px;color:#d0cbb8;flex-shrink:0;user-select:none;line-height:1;cursor:grab;touch-action:none;min-width:28px;text-align:center;padding:2px 0;}
       .cat-ck{width:22px;height:22px;border:1.5px solid var(--ru);border-radius:3px;background:var(--wh);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--wh);flex-shrink:0;cursor:pointer;}
       .cat-ck.on{background:var(--ac);border-color:var(--ac);}
       .cat-ck.partial{background:var(--al);border-color:var(--ac);color:var(--ac);}
@@ -576,7 +502,7 @@ function App(){
       .cv{font-size:20px;color:var(--mu);width:20px;text-align:center;}
       .cbdy{padding:2px 12px 14px;border-top:1px solid var(--ru);}
       .cb2.complete .cbdy{border-top-color:var(--al);}
-      .row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #ede9d8;touch-action:none;}
+      .row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #ede9d8;}
       .row:last-of-type{border-bottom:none;}
       .row.done{opacity:.45;}
       .row.done .ct{text-decoration:line-through;}
@@ -599,19 +525,16 @@ function App(){
             <div className="tl">
               {trips.length===0&&<div className="em">Ingen turar enno. Opprett ein nedanfor.</div>}
               {trips.map(t=>{
-                const prog=calcProgress(t);
-                const tt=tripTypes.find(x=>x.id===t.tripTypeId)||{icon:"house",name:t.tripTypeId};
-                return(
-                  <div key={t.id} className="trow" onClick={()=>setActiveId(t.id)}>
-                    <TripIcon iconKey={tt.icon} size={36}/>
-                    <div className="trb">
-                      <div className="trn">{t.name}</div>
-                      <div className="trm">{t.days} {t.days===1?"dag":"d"} &middot; {tt.name} &middot; {t.season}</div>
-                      <div className="mb"><div className="mf" style={{width:prog.overall+"%"}}/></div>
-                    </div>
-                    <button className="xb" onClick={e=>{e.stopPropagation();del(t.id);}}>×</button>
+                const prog=calcProgress(t),tt=tripTypes.find(x=>x.id===t.tripTypeId)||{icon:"house",name:t.tripTypeId};
+                return(<div key={t.id} className="trow" onClick={()=>setActiveId(t.id)}>
+                  <TripIcon iconKey={tt.icon} size={36}/>
+                  <div className="trb">
+                    <div className="trn">{t.name}</div>
+                    <div className="trm">{t.days} {t.days===1?"dag":"d"} &middot; {tt.name} &middot; {t.season}</div>
+                    <div className="mb"><div className="mf" style={{width:prog.overall+"%"}}/></div>
                   </div>
-                );
+                  <button className="xb" onClick={e=>{e.stopPropagation();del(t.id);}}>x</button>
+                </div>);
               })}
             </div>
             {adding
